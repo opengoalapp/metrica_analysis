@@ -16,7 +16,7 @@ rng = np.random.default_rng() # define numpy random number generator
 imported_home = pd.read_csv('data/Sample_Game_1_RawTrackingData_Home_Team.csv', skiprows=2) # ignore first 2 unneeded rows on inport
 imported_away = pd.read_csv('data/Sample_Game_1_RawTrackingData_Away_Team.csv', skiprows=2)
 
-timestep = imported_home["Time [s]"].iloc[1] - imported_home["Time [s]"].iloc[0] # 
+timestep = imported_home["Time [s]"].iloc[1] - imported_home["Time [s]"].iloc[0] # find timestep of imported data from csv
 
 pitch_xdim = 105 # pitch dimension in metres
 pitch_ydim = 68
