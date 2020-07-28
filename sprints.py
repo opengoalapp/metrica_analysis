@@ -25,7 +25,7 @@ frames_per_sample = 5 # how often will we sample the data - e.g. 5 = sample ever
 sampled_timestep= frames_per_sample * timestep
 
 tracking_home_sampled = imported_home.iloc[::frames_per_sample] # keep every 5th row
-tracking_away_sampled = imported_home.iloc[::frames_per_sample]
+tracking_away_sampled = imported_away.iloc[::frames_per_sample]
 
 tracking_home = Reformat(tracking_home_sampled) # set to use sampled version to load into DB
 tracking_away = Reformat(tracking_away_sampled)
@@ -62,7 +62,7 @@ bin_edges = [0,standing, walking, jogging, running, high_intense]
 keys_list = list(home_dict.keys())
 players = [i for i in keys_list if i != 'Ball'] # remove ball from key list to get players only
 
-fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(20,20))
+fig, axes = plt.subplots(nrows=4, ncols=4, figsize=(22,22))
 
 fig.suptitle('Categorised Player On-pitch Movement Intensity', fontsize = 26)
 

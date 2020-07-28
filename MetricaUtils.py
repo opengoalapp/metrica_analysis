@@ -110,3 +110,90 @@ def RemoveInactive(team_dict): # Input - a dictionary of a team's player data da
         team_dict[player] = team_dict[player].drop(team_dict[player][team_dict[player]['x_loc'].isnull()].index)
     
     return team_dict  
+
+# function to remove data points where implied velocity is > 12m/s (limit of elite human sprinting)
+
+def RemoveImplausible(team_dict):
+    
+    for player in team_dict:
+        team_dict[player] = team_dict[player][team_dict[player]['vel'] <= 12]
+    return team_dict 
+
+
+# function to generate start and stop frames for posssessions for each team
+    
+def GetPossessionWindows(event_data, home_dict, away_dict):
+    
+    event_data['team_int'] = event_data['team'].map({'Home': 1, 'Away': 0}) # binarize so we can do a diff to detect change of possession
+    
+    pos_change_1 = event_data['team_int'].diff()[event_data['team_int'].diff() ==-1].index.values
+    pos_change_2 = event_data['team_int'].diff()[event_data['team_int'].diff() ==1].index.values
+    
+    data = {'start': pos_change_2, 'end': pos_change_1}
+    nonko_team_pos = pd.DataFrame(data = data) # data for team who receives ball on first possession change
+    nonko_team_pos['end'] = nonko_team_pos['end']-1
+    
+    pos_change_1 = np.insert(pos_change_1,0,0) # insert 0 at start of array for team who starts with ball
+    pos_change_2 = np.append(pos_change_2, len(event_data)-1) # add last index to the end of the array as this will be the pos end at final whistle
+    data = {'start': pos_change_1, 'end': pos_change_2}
+    ko_team_pos = pd.DataFrame(data = data) # data for team who kicks off
+    ko_team_pos['end'] = ko_team_pos['end']-1
+    
+    #if team in pos at half end kicks off 2nd half then any time on the clock accumulated over half time will count as a possession time
+    #maybe strip it after  - but shouldn't matter as time when ball is inactive is stripped out   
+    
+    ko_team_pos_name = event_data['team'].iloc[0] # TODO: if using metrica data with actual team names will need a one liner to convert actual team names to Home and Away
+     # lookup start and end frames
+    teams = [ko_team_pos,nonko_team_pos]
+    
+    for team in teams:
+        
+        start_frames = []
+        end_frames = []
+        
+        for row in team.itertuples(index=False):
+            start_frame = event_data['start_frame'].iloc[row[0]]
+            end_frame = event_data['start_frame'].iloc[row[1]]
+            
+            start_frames.append(start_frame)
+            end_frames.append(end_frame)
+        
+        team['start_frame'] = start_frames
+        team['end_frame'] = end_frames
+     
+    dicts = {'Home':home_dict, 'Away':away_dict}    
+    
+    for team_dict in dicts.items():
+        
+        if team_dict[0] == 'Home': # get key of active dict
+            active_team = 'Home'
+        else:
+            active_team = 'Away'
+    
+        for player in team_dict[1]:
+        
+            team_dict[1][player]['in_pos'] = 0
+            team_dict[1][player]['opp_in_pos'] = 0
+            
+            if ko_team_pos_name == active_team:
+                
+                for row in ko_team_pos.itertuples(index=False):
+                    team_dict[1][player].loc[(team_dict[1][player].frame >= row[2]) &(team_dict[1][player].frame <= row[3]), 'in_pos'] = 1
+                    
+                for row in nonko_team_pos.itertuples(index=False):
+                    team_dict[1][player].loc[(team_dict[1][player].frame >= row[2]) &(team_dict[1][player].frame <= row[3]), 'opp_in_pos'] = 1
+                    
+            else:
+            
+                for row in nonko_team_pos.itertuples(index=False):
+                    team_dict[1][player].loc[(team_dict[1][player].frame >= row[2]) &(team_dict[1][player].frame <= row[3]), 'in_pos'] = 1
+                    
+                for row in ko_team_pos.itertuples(index=False):
+                    team_dict[1][player].loc[(team_dict[1][player].frame >= row[2]) &(team_dict[1][player].frame <= row[3]), 'opp_in_pos'] = 1    
+        
+    
+    
+    home_dict = dicts['Home']
+    away_dict = dicts['Away']
+    
+    return home_dict, away_dict    
