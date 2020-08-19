@@ -7,6 +7,7 @@ Currently there are example scripts to:
 
 * Evaluate sprinting/movement profiles
 * Look at average position data both in and out of possession
+* Analyse pressure by an opponent on pass receipts
 
 There is also a utilities file which provides some functions to help manipulate the data files for simpler anlysis. The aim being that they may save some people some time or make it easuer to get started.
 
